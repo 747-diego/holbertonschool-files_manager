@@ -6,7 +6,7 @@ class DBClient {
     const databaseHost = process.env.DB_HOST || 'localhost';
     const databasePort = process.env.DB_PORT || 27017;
     const database = process.env.DB_DATABASE || 'files_manager';
-    const mongoLink = `mongodb://${databaseHost}:${databasePort}`;
+    const mongoLink = `mongodb://${databaseHost}:${databasePort}/`;
 
     MongoClient.connect(mongoLink, { useUnifiedTopology: true }, (error, client) => {
       if (error) console.log(error);
@@ -17,27 +17,42 @@ class DBClient {
   }
 
   isAlive() {
-    if (this.client.isConnected()) {
-      return (true);
-    }
-    else {
-      return (false);
-    }
+    const check = !!this.db;
+    return (check);
   }
 
   async nbUsers() {
-    const countUsers = await this.db.collection('users').countDocuments();
-    return (countUsers);
+    const userDocuments = await this.db.collection('users').countDocuments();
+    return (userDocuments);
   }
 
   async nbFiles() {
-    const countFiles = await this.db.collection('files').countDocuments();
-    return (countFiles);
+    const userFiles = await this.db.collection('files').countDocuments();
+    return (userFiles);
   }
 
   async findUser(query) {
-    return (await this.db.collection('users').findOne(query));
+    const user = await this.db.collection('users').findOne(query);
+    return (user);
+  }
+
+  async createUser(email, password) {
+    await this.db.collection('users').insertOne({ email, password });
+
+    const newUser = await this.db.collection('users').findOne({ email });
+    return ({ id: newUser._id, email: newUser.email });
+  }
+
+  async findFile(query) {
+    const file = await this.db.collection('files').findOne(query);
+    return (file);
+  }
+
+  async uploadFile(data) {
+    await this.db.collection('files').insertOne(data);
+    const newFile = await this.db.collection('files').findOne(data);
+    return (newFile);
   }
 }
-const client = new DBClient();
-export default client;
+const dbClient = new DBClient();
+export default dbClient;
